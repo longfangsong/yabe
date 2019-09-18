@@ -2,6 +2,7 @@ extern crate yabe;
 
 use yabe::http::request::Request;
 use yabe::http::response::Response;
+use yabe::http::response::Status;
 use std::sync::Arc;
 
 fn handler(request: Request, response: &mut Response) {
@@ -24,11 +25,17 @@ fn handler_render(request: Request, response: &mut Response) {
     );
 }
 
+fn handler_redirect(request: Request, response: &mut Response) {
+    response.status = Status::MovedPermanently;
+    response.headers.insert("Location".to_string(), "http://127.0.0.1:8086/render?name=redirected".to_string());
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut server = yabe::Server::new();
     server.add_handler("/", Arc::new(handler));
     server.add_handler("/html", Arc::new(handler_html));
     server.add_handler("/render", Arc::new(handler_render));
+    server.add_handler("/redirect", Arc::new(handler_redirect));
     server.start_at("127.0.0.1:8086").await
 }
