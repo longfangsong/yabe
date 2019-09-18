@@ -2,11 +2,11 @@ use nom::IResult;
 use crate::http::request::{Method, URI, HTTPVersion, Request};
 use crate::http::request::{METHOD_MAP, HTTP_VERSION_MAP};
 use nom::branch::alt;
-use nom::bytes::streaming::{tag, take_until, take};
-use nom::combinator::{map, recognize, opt};
+use nom::bytes::streaming::{tag, take_until, take, take_till};
+use nom::combinator::{map, recognize, opt, not};
 use nom::multi::{many0, separated_list};
 use nom::sequence::tuple;
-use nom::character::complete::{alphanumeric1, none_of, alpha1};
+use nom::character::complete::{alphanumeric1, none_of, alpha1, multispace0};
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -24,6 +24,10 @@ pub(crate) fn method(input: &str) -> IResult<&str, Method> {
         })(input)
 }
 
+fn token(input: &str) -> IResult<&str, &str> {
+    recognize(many0(none_of(" &=\n")))(input)
+}
+
 pub(crate) fn uri(input: &str) -> IResult<&str, URI> {
     map(tuple((
         recognize(many0(none_of("? \n"))),
@@ -32,20 +36,20 @@ pub(crate) fn uri(input: &str) -> IResult<&str, URI> {
             separated_list(
                 tag("&"),
                 tuple((
-                    alphanumeric1,
+                    token,
                     tag("="),
-                    opt(alphanumeric1)
+                    token
                 )),
             )
         )))
-    )), |(path, query_raw): (&str, Option<(&str, Vec<(&str, &str, Option<&str>)>)>)| {
+    )), |(path, query_raw): (&str, Option<(&str, Vec<(&str, &str, &str)>)>)| {
         let path = path.to_owned();
         let mut query = HashMap::new();
         match query_raw {
             Some(query_raw) => {
                 let (_, query_list) = query_raw;
                 for it in query_list {
-                    query.insert(it.0.to_string(), it.2.unwrap_or("").to_string());
+                    query.insert(it.0.to_string(), it.2.to_string());
                 }
             }
             _ => ()
