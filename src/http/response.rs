@@ -7,16 +7,14 @@ pub enum Status {
     MovedPermanently,
     Found,
     BadRequest,
+    ImATeapot,
     InternalServerError,
 }
 
-impl Eq for Status {
-
-}
+impl Eq for Status {}
 
 impl Hash for Status {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-    }
+    fn hash<H: Hasher>(&self, state: &mut H) {}
 }
 
 #[derive(Debug)]
@@ -33,6 +31,7 @@ lazy_static! {
         m.insert(Status::MovedPermanently,("301","Moved Permanently"));
         m.insert(Status::Found,("302","Found"));
         m.insert(Status::BadRequest,("400","Bad Request"));
+        m.insert(Status::ImATeapot,("418","I'm a teapot"));
         m.insert(Status::InternalServerError,("500","Internal Server Error"));
         m
     };
